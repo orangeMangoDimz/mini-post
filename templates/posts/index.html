@@ -1,0 +1,69 @@
+{% extends "index.html" %}
+
+{% block content %}
+{% for post in object_list %}
+<div>
+    <h1> {{ post.title }} </h1>
+    <p>By: {{ post.user.username }}</p>
+    <p>Total like: <span class="total_likes" data-post="{{ post.pk }}"> {{ post.statistic.total_likes }}</span></p>
+    <p>Total commets: <span class="total_comments"> {{ post.statistic.total_comments }}</span></p>
+    <p> {{ post.description }} </p>
+    <button data-post="{{ post.pk }}" class="like-btn" type="button">Like</button>
+    <button type="button">View Comments</button>
+</div>
+{% endfor %}
+{% endblock content %}
+
+{% block js %}
+<script>
+// update like post count
+$(".like-btn").click(async function() {
+    const postId = $(this).data("post")
+    await handleUpdateLikePost(postId)
+})
+
+
+async function handleUpdateLikePost(postId) {
+    const url = "{% url 'api.update_post_stat' postId=1234 %}".replace("1234", postId);
+    const cookie = getCookie("csrftoken")
+    const data = {
+        type: "likes"
+    }
+    $.ajax({
+        url: url,
+        type: "PUT",
+        data: JSON.stringify(data),
+        contentType: "application/json",
+        headers: {
+            "X-CSRFToken": cookie
+        },
+        success: function(response) {
+            const { total_likes, total_comments } = response.data
+            $(`.total_likes[data-post=${postId}]`).text(total_likes)
+            $(`.total_comments[data-post=${postId}]`).text(total_likes)
+        },
+        error: function(error) {
+            console.error(error.responseJSON.message)
+        }
+    })
+}
+
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let cookie of cookies) {
+      // Does this cookie string begin with the name we want?
+      if (cookie.trim().substring(0, name.length + 1) === name + "=") {
+        cookieValue = decodeURIComponent(
+          cookie.trim().substring(name.length + 1)
+        );
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+</script>
+{% endblock js %}
