@@ -1,69 +1,97 @@
 {% extends "index.html" %}
 
 {% block content %}
-{% for post in object_list %}
-<div>
-    <h1> {{ post.title }} </h1>
-    <p>By: {{ post.user.username }}</p>
-    <p>Total like: <span class="total_likes" data-post="{{ post.pk }}"> {{ post.statistic.total_likes }}</span></p>
-    <p>Total commets: <span class="total_comments"> {{ post.statistic.total_comments }}</span></p>
-    <p> {{ post.description }} </p>
-    <button data-post="{{ post.pk }}" class="like-btn" type="button">Like</button>
-    <button type="button">View Comments</button>
-</div>
-{% endfor %}
+    {% for post in object_list %}
+        <div class="card" style="width: 18rem;">
+            <img src="{{ post.get_thumbnail_url }}" class="card-img-top" alt="post-image">
+            <div class="card-body">
+                <h5 class="card-title"> {{ post.title }} </h5>
+                <p class="card-text">{{ post.user.username }}</p>
+                <p class="card-text">{{ post.description }}</p>
+                <p class="card-text">Total Likes: <span data-post="{{ post.pk }}" class="total_likes">
+{{ post.statistic.total_likes }}
+                </span></p>
+            </div>
+            <div class="card-footer bg-white d-flex justify-content-center align-items-center gap-3">
+                <button data-post="{{ post.pk }}" class="like-btn btn btn-primary" type="button">Like</button>
+                <button class="btn btn-secondary" type="button">Comments</button>
+            </div>
+        </div>
+    {% endfor %}
+    {{ room_name|json_script:"room-name" }}
 {% endblock content %}
 
 {% block js %}
-<script>
-// update like post count
-$(".like-btn").click(async function() {
-    const postId = $(this).data("post")
-    await handleUpdateLikePost(postId)
-})
-
-
-async function handleUpdateLikePost(postId) {
-    const url = "{% url 'api.update_post_stat' postId=1234 %}".replace("1234", postId);
-    const cookie = getCookie("csrftoken")
-    const data = {
-        type: "likes"
-    }
-    $.ajax({
-        url: url,
-        type: "PUT",
-        data: JSON.stringify(data),
-        contentType: "application/json",
-        headers: {
-            "X-CSRFToken": cookie
-        },
-        success: function(response) {
-            const { total_likes, total_comments } = response.data
-            $(`.total_likes[data-post=${postId}]`).text(total_likes)
-            $(`.total_comments[data-post=${postId}]`).text(total_likes)
-        },
-        error: function(error) {
-            console.error(error.responseJSON.message)
-        }
-    })
-}
-
-function getCookie(name) {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== "") {
-    const cookies = document.cookie.split(";");
-    for (let cookie of cookies) {
-      // Does this cookie string begin with the name we want?
-      if (cookie.trim().substring(0, name.length + 1) === name + "=") {
-        cookieValue = decodeURIComponent(
-          cookie.trim().substring(name.length + 1)
+    <script>
+        const roomName = JSON.parse(document.getElementById('room-name').textContent);
+        console.log("roomName", roomName)
+        const chatSocket = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/ws/notification/'
+            + roomName
+            + '/'
         );
-        break;
-      }
-    }
-  }
-  return cookieValue;
-}
 
-</script>
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            document.querySelector('#chat-log').value += (data.message + '\n');
+        };
+
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        // update like post count
+        $(".like-btn").click(async function() {
+            const postId = $(this).data("post")
+            console.log("postId", postId)
+            await handleUpdateLikePost(postId)
+        })
+
+
+        async function handleUpdateLikePost(postId) {
+            const url = "{% url 'api.update_post_stat' postId=1234 %}".replace("1234", postId);
+            const cookie = getCookie("csrftoken")
+            const data = {
+                type: "likes"
+            }
+            $.ajax({
+                url: url,
+                type: "PUT",
+                data: JSON.stringify(data),
+                contentType: "application/json",
+                headers: {
+                    "X-CSRFToken": cookie
+                },
+                success: function(response) {
+                    console.log("success", response)
+                    const { total_likes, total_comments } = response.data
+                    $(`.total_likes[data-post=${postId}]`).text(total_likes)
+                    $(`.total_comments[data-post=${postId}]`).text(total_likes)
+                },
+                error: function(error) {
+                    console.error(error.responseJSON.message)
+                }
+            })
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== "") {
+                const cookies = document.cookie.split(";");
+                for (let cookie of cookies) {
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.trim().substring(0, name.length + 1) === name + "=") {
+                        cookieValue = decodeURIComponent(
+                            cookie.trim().substring(name.length + 1)
+                        );
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+    </script>
 {% endblock js %}

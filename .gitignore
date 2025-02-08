@@ -3,6 +3,7 @@ __pycache__
 ./mini_post/.env
 db.sqlite3
 /env
+.venv
 *.env
 .vscode
 media/
