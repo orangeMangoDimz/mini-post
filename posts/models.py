@@ -18,6 +18,11 @@ class Posts(BaseModel):
     def __str__(self):
         return str(self.title)
 
+    @property
+    def get_thumbnail_url(self):
+        if self.thumbnail and hasattr(self.thumbnail, "url"):
+            return self.thumbnail.url
+
 class PostsStat(models.Model):
     post = models.OneToOneField(
         "Posts",
@@ -37,6 +42,7 @@ def _create_post_stat(sender, instance, created, **kwargs):
             total_comments=0
         )
 
+        # this logic should be available in the API
         Likes.objects.create(
             content_object=instance,
             object_id=instance.pk,

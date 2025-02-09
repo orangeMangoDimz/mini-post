@@ -36,6 +36,7 @@ env = environ.Env()
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -49,6 +50,7 @@ INSTALLED_APPS = [
     'activities',
     "api",
     "rest_framework",
+    "bootstrap5",
 ]
 
 MIDDLEWARE = [
@@ -59,6 +61,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'config.middleware.AuthRequiredMiddleware',
 ]
 
 ROOT_URLCONF = 'mini_post.urls'
@@ -89,7 +92,17 @@ CACHES = {
     }
 }
 
+ASGI_APPLICATION = "mini_post.asgi.application"
 WSGI_APPLICATION = 'mini_post.wsgi.application'
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
 
 
 # Database

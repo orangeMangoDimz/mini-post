@@ -3,21 +3,32 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>
-            {% block title %}
-            {% endblock title %}
-        </title>
-        {% block css %}
-        {% endblock css %}
+        <title> Mini Post | {% block title %} {% endblock title %} </title>
+        {% load bootstrap5 %}
+        {% bootstrap_css %}
+        {% bootstrap_javascript %}
+        {% block css %} {% endblock css %}
         <script src="https://code.jquery.com/jquery-3.7.1.js" integrity="sha256-eKhayi8LEQwp4NKxN+CfCh+3qOVUtJn3QNZ0TciWLP4=" crossorigin="anonymous"></script>
     </head>
     <body>
-
-        {% block content %}
-        {% endblock content %}
-
-        {% block js %}
-        {% endblock js %}
-    
+        {% block content %} {% endblock content %}
+        <script>
+            const getCookie =(name) => {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== "") {
+                    const cookies = document.cookie.split(";");
+                    for (let cookie of cookies) {
+                        if (cookie.trim().substring(0, name.length + 1) === name + "=") {
+                            cookieValue = decodeURIComponent(
+                                cookie.trim().substring(name.length + 1)
+                            );
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+        </script>
+        {% block js %} {% endblock js %}
     </body>
 </html>
