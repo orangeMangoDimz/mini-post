@@ -9,7 +9,7 @@
                 <p class="card-text">{{ post.user.username }}</p>
                 <p class="card-text">{{ post.description }}</p>
                 <p class="card-text">Total Likes: <span data-post="{{ post.pk }}" class="total_likes">
-{{ post.statistic.total_likes }}
+                    {{ post.statistic.total_likes }}
                 </span></p>
             </div>
             <div class="card-footer bg-white d-flex justify-content-center align-items-center gap-3">
@@ -18,80 +18,111 @@
             </div>
         </div>
     {% endfor %}
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+    </div>
     {{ room_name|json_script:"room-name" }}
 {% endblock content %}
 
 {% block js %}
     <script>
-        const roomName = JSON.parse(document.getElementById('room-name').textContent);
-        console.log("roomName", roomName)
-        const chatSocket = new WebSocket(
-            'ws://'
-            + window.location.host
-            + '/ws/notification/'
-            + roomName
-            + '/'
-        );
+        window.onload = function() {
+            let chatSocket = null;
 
-        chatSocket.onmessage = function(e) {
-            const data = JSON.parse(e.data);
-            document.querySelector('#chat-log').value += (data.message + '\n');
-        };
-
-        chatSocket.onclose = function(e) {
-            console.error('Chat socket closed unexpectedly');
-        };
-
-        // update like post count
-        $(".like-btn").click(async function() {
-            const postId = $(this).data("post")
-            console.log("postId", postId)
-            await handleUpdateLikePost(postId)
-        })
-
-
-        async function handleUpdateLikePost(postId) {
-            const url = "{% url 'api.update_post_stat' postId=1234 %}".replace("1234", postId);
-            const cookie = getCookie("csrftoken")
-            const data = {
-                type: "likes"
-            }
-            $.ajax({
-                url: url,
-                type: "PUT",
-                data: JSON.stringify(data),
-                contentType: "application/json",
-                headers: {
-                    "X-CSRFToken": cookie
-                },
-                success: function(response) {
-                    console.log("success", response)
-                    const { total_likes, total_comments } = response.data
-                    $(`.total_likes[data-post=${postId}]`).text(total_likes)
-                    $(`.total_comments[data-post=${postId}]`).text(total_likes)
-                },
-                error: function(error) {
-                    console.error(error.responseJSON.message)
-                }
-            })
-        }
-
-        function getCookie(name) {
-            let cookieValue = null;
-            if (document.cookie && document.cookie !== "") {
-                const cookies = document.cookie.split(";");
-                for (let cookie of cookies) {
-                    // Does this cookie string begin with the name we want?
-                    if (cookie.trim().substring(0, name.length + 1) === name + "=") {
-                        cookieValue = decodeURIComponent(
-                            cookie.trim().substring(name.length + 1)
-                        );
-                        break;
+            const eventHandler = () => {
+                // update like post count
+                $(".like-btn").click(async function() {
+                    const postId = $(this).data("post")
+                    console.log("postId", postId)
+                    try {
+                        const { notification_message, post_user_id } = await handleUpdateLikePost(postId);
+                        if (chatSocket) {
+                            console.log("sening message")
+                            console.log("post_user_id: ", post_user_id)
+                            chatSocket.send(JSON.stringify({
+                                'message': notification_message,
+                                'target_user_id': post_user_id
+                            }));
+                        }
+                    } catch (error) {
+                        console.error("Error updating like post:", error);
                     }
-                }
+                })
             }
-            return cookieValue;
-        }
 
+            async function handleUpdateLikePost(postId) {
+                const url = "{% url 'api.update_post_stat' postId=1234 %}".replace("1234", postId);
+                const cookie = getCookie("csrftoken")
+                const data = { type: "likes" }
+                return new Promise((resolve, reject) => {
+                    $.ajax({
+                        url: url,
+                        type: "PUT",
+                        data: JSON.stringify(data),
+                        contentType: "application/json",
+                        headers: { "X-CSRFToken": cookie },
+                        success: function(response) {
+                            const { total_likes, total_comments, notification_message, post_user_id } = response.data
+                            $(`.total_likes[data-post=${postId}]`).text(total_likes)
+                            $(`.total_comments[data-post=${postId}]`).text(total_likes)
+                            resolve({notification_message, post_user_id})
+                        },
+                        error: function(error) {
+                            reject(error.responseJSON.message)
+                        }
+                    })
+                })
+            }
+
+
+            const initWebsocket = () => {
+                console.log("roomName", roomName)
+                chatSocket = new WebSocket(
+                    'ws://'
+                    + window.location.host
+                    + '/ws/notification/'
+                    + roomName
+                    + '/'
+                );
+
+                chatSocket.onmessage = function(e) {
+                    console.log(e.data);
+                    const { message , from_user_id} = JSON.parse(e.data);
+                    const curr_user_id = "{{ request.user.id }}";
+                    console.log("message", message)
+                    console.log("curr_user_id", curr_user_id)
+                    console.log("from_user_id", from_user_id)
+                    
+                    if (curr_user_id === from_user_id.toString()) {
+                        return;
+                    }
+                        
+                    const toastContainer = $(".toast-container");
+                    const toastContent = 
+                    `
+                        <div class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="toast-header bg-primary text-white">
+                                <strong class="me-auto">Notification!</strong>
+                                <button type="button" class="btn-clos text-whitee" data-bs-dismiss="toast" aria-label="Close"></button>
+                            </div>
+                            <div class="toast-body">
+                                ${message}
+                            </div>
+                        </div>
+                    `
+                    toastContainer.append(toastContent);
+                    const newestToast = toastContainer.find(".toast").last();
+                    const toast = new bootstrap.Toast(newestToast);
+                    toast.show();
+                };
+
+                chatSocket.onclose = function(e) {
+                    console.error('Chat socket closed unexpectedly');
+                };
+            }
+            const roomName = JSON.parse(document.getElementById('room-name').textContent);
+
+            initWebsocket();
+            eventHandler();
+        }
     </script>
 {% endblock js %}

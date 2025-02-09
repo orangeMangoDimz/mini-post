@@ -4,8 +4,8 @@ from django.shortcuts import render
 from django.views.generic.list import ListView
 from likes.models import Likes
 from .models import Posts, PostsStat
-
-# Create your views here.
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 
 class PostView(ListView):
     model = Posts
@@ -14,9 +14,8 @@ class PostView(ListView):
     def get_queryset(self):
         qs = Posts.objects.prefetch_related("statistic").all()
         return qs
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["room_name"] = "test"
         return context
-    

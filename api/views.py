@@ -47,9 +47,11 @@ class UpdatePostStats(UpdateAPIView, FormatResponse):
                     post.save()
 
                 serialize = self.serializer_class(post)
-                print("serialize", serialize.data)
+                response_data = serialize.data
+                response_data["notification_message"] = f"{request.user.username} has liked your post"
+                response_data["post_user_id"] = post.post.user.id
 
-                return self.success_request("Success update data", serialize.data)
+                return self.success_request("Success update data", response_data)
             return self.bad_request("Bad request", serialize.errors)
 
         except PostsStat.DoesNotExist:

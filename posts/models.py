@@ -42,6 +42,7 @@ def _create_post_stat(sender, instance, created, **kwargs):
             total_comments=0
         )
 
+        # this logic should be available in the API
         Likes.objects.create(
             content_object=instance,
             object_id=instance.pk,
