@@ -1,6 +1,7 @@
 {% extends "index.html" %}
 
 {% block content %}
+    {% include 'partial/title.html' with content='Post List' %}
     {% for post in object_list %}
         <div class="card" style="width: 18rem;">
             <img src="{{ post.get_thumbnail_url }}" class="card-img-top" alt="post-image">
@@ -34,6 +35,7 @@
                     const postId = $(this).data("post")
                     console.log("postId", postId)
                     try {
+<<<<<<< Updated upstream
                         const { notification_message, post_user_id } = await handleUpdateLikePost(postId);
                         if (chatSocket) {
                             console.log("sening message")
@@ -43,6 +45,22 @@
                                 'target_user_id': post_user_id
                             }));
                         }
+=======
+                        // change the button UI
+                        handleStateButton(postId, action);
+                        // prevent spam click
+                        clearTimeout(timeOutId);
+                        timeOutId = setTimeout(async () => {
+                            const { notification_message, post_user_id } = await handleUpdateLikePost(postId, action);
+                            if (chatSocket && action !== 'unlike') {
+                                console.log("Send Notification")
+                                chatSocket.send(JSON.stringify({
+                                    'message': notification_message,
+                                    'target_user_id': post_user_id
+                                }));
+                            }
+                        }, 500);
+>>>>>>> Stashed changes
                     } catch (error) {
                         console.error("Error updating like post:", error);
                     }
