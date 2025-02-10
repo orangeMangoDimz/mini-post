@@ -1,28 +1,33 @@
 {% extends "index.html" %}
 
-{% block content %}
+{% block section %} {% endblock section %}
 
-<div>
-    <h1>Login Page</h1>
-    <form method="post" action="{% url 'login' %}">
-        {% csrf_token %}
-        <div>
-            <label for="username">Username</label>
-            <input type="text" id="username" name="username">
-        </div>
-        <div>
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password">
-        </div>
-        <button type="submit">Login</button>
-    </form>
-
-    {% if error %}
-    <div class="alert alert-error">
-        {{ error }}
+{% block auth %}
+  <div class="container w-100 vh-100 d-flex justify-content-center align-items-center">
+    <div class="card" style="width: 18rem;">
+      <div class="card-header bg-white">
+        {% include 'partial/title.html' with content='LOGIN' %}
+      </div>
+      <div class="card-body">
+        <form method="post" action="{% url 'login' %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" class="form-control" id="username" name="username">
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" name="password">
+          </div>
+          {% if error %}
+            <div class="text-danger alert alert-error p-0">
+              {{ error }}
+            </div>
+          {% endif %}
+          <button type="submit" class="w-100 btn btn-outline-dark">Log In</button>
+        </form>
+      </div>
     </div>
-    {% endif %}
-</div>
-
-{% endblock content %}
+  </div>
+{% endblock auth %}
 

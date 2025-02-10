@@ -104,6 +104,64 @@ CHANNEL_LAYERS = {
     },
 }
 
+LOGGING_DIR = os.path.join(BASE_DIR, "logs")
+os.makedirs(LOGGING_DIR, exist_ok=True)
+LOGGING = {
+    'version': 1, 
+    'disable_existing_loggers': False, 
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] [{levelname}] {module} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '[{levelname}] {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'console': {
+            'level': env('DJANGO_LOG_LEVEL'),
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+        'system': {
+            'level': env('DJANGO_LOG_LEVEL'),
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOGGING_DIR, 'system.log'),
+            'formatter': 'verbose',
+        },
+        'auth': {
+            'level': env('DJANGO_LOG_LEVEL'),
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOGGING_DIR, 'auth_user.log'),
+            'formatter': 'verbose',
+        },
+        'post': {
+            'level': env('DJANGO_LOG_LEVEL'),
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(LOGGING_DIR, 'post.log'),
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'system'],
+            'level':env('DJANGO_LOG_LEVEL'),
+            'propagate': False,
+        },
+        'mini_post.views': {  
+            'handlers': ['console', 'auth'],
+            'level': env('DJANGO_LOG_LEVEL'), 
+            'propagate': False,
+        },
+        'api': {  
+            'handlers': ['console', 'post'],
+            'level': env('DJANGO_LOG_LEVEL'), 
+            'propagate': False,
+        },
+    },
+}
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
