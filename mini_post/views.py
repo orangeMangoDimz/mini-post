@@ -26,7 +26,7 @@ def login_user(request):
 
         return render(request, template_name, {
             "error": "Invalid username or password"
-        })
+        }, status=200)
 
     return render(request, template_name)
 

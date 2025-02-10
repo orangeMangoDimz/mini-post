@@ -89,8 +89,10 @@ class UpdatePostStats(UpdateAPIView, FormatResponse):
         except PostsStat.DoesNotExist:
             return self.not_found_request("Post not found")
 
+        except Likes.DoesNotExist:
+            return self.not_found_request("Like not found")
+
         except Exception as e:
-            print("erorr", e)
             error_message = f"Something is wroing with the server! {e}"
             logger.error(error_message)
             return self.internal_server_error()
