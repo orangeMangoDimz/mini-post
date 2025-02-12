@@ -1,10 +1,12 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
+from django.core.cache import cache
 
 class TestView(TestCase):
 
     def setUp(self):
+        cache.clear()
         self.client = Client()
         self.login_url = reverse('login')
         self.logout_url = reverse('logout')

@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.http import JsonResponse
 import logging
 
 class AppLogger:
@@ -23,3 +24,9 @@ class AppLogger:
 
     def critical(self, message):
         self.logger.critical(message)
+
+class AppRateLimiter:
+
+    @staticmethod
+    def too_many_requests(request, exception):
+        return JsonResponse({"error": "Too many requests"}, status=429)
