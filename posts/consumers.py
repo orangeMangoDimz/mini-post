@@ -25,9 +25,7 @@ class ChatConsumer(WebsocketConsumer):
 
 
     def disconnect(self, code):
-        print(self.user_id, " disconnected")
         if self.user_id in user_channel_map:
-            print("deleting user_channel_map")
             del user_channel_map[self.user_id]
 
         async_to_sync(self.channel_layer.group_discard)(
@@ -38,7 +36,6 @@ class ChatConsumer(WebsocketConsumer):
         text_data_json = json.loads(text_data)
         message = text_data_json["message"]
         target_user_id = text_data_json.get("target_user_id", None)
-        print("target_user_id", target_user_id)
 
         if target_user_id:
             self.notify_user(target_user_id, message)
@@ -52,9 +49,7 @@ class ChatConsumer(WebsocketConsumer):
         self.send(text_data=json.dumps(message))
 
     def notify_user(self, target_user_id, message):
-        print("user_channel_map: ", user_channel_map)
         target_channel_name = user_channel_map.get(target_user_id)
-        print("target_channel_name", target_channel_name)
         
         if target_channel_name:
             async_to_sync(self.channel_layer.send)(

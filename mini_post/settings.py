@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'activities',
     "api",
     "rest_framework",
+    "rest_framework.authtoken",
     "bootstrap5",
 ]
 
@@ -91,6 +92,7 @@ CACHES = {
         }
     }
 }
+RATELIMIT_USE_CACHE = 'default'
 
 ASGI_APPLICATION = "mini_post.asgi.application"
 WSGI_APPLICATION = 'mini_post.wsgi.application'

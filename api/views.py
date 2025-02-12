@@ -1,10 +1,15 @@
 from rest_framework.generics import UpdateAPIView
-from rest_framework.views import Response, status
+from rest_framework.views import Response, status, APIView
+from rest_framework.permissions import AllowAny
 from posts.models import PostsStat
 from .serializers import PostsStatsSerializers
 from likes.models import Likes
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.auth.models import User
 from config.views import AppLogger
+from django_ratelimit.decorators import ratelimit
+from django.utils.decorators import method_decorator
+from rest_framework.authtoken.models import Token
 
 logger = AppLogger(__name__)
 
@@ -31,9 +36,41 @@ class FormatResponse:
             "message": "Internal server error"
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+class SignIn(APIView, FormatResponse):
+    permission_classes = [AllowAny]
+
+    # TODO: add  ratelimit for this function
+    def post(self, request, format=None):
+        data = request.data
+        username = data.get("username", None)
+        password = data.get("password", None)
+
+        if username is None or password is None:
+            return self.bad_request("Bad request", "Please provide both username and password")
+
+        try:
+            user = User.objects.get(username=username)
+            if not user.check_password(password):
+                return self.bad_request("Bad request", "Invalid username or password!")
+
+            token, _ = Token.objects.get_or_create(user=user)
+            data = {
+                "token": token.key,
+                "user": {
+                    "username": user.username,
+                    "email": user.email,
+                },
+            }
+            return self.success_request("Success login", data)
+
+        except User.DoesNotExist:
+            return self.not_found_request("Invalid username or password!")
+
 class UpdatePostStats(UpdateAPIView, FormatResponse):
+    # NOTE: Why do I need this serializer meanwhile I don't use the data in my Frontend?
     serializer_class = PostsStatsSerializers
 
+    @method_decorator(ratelimit(key="user_or_ip", rate="10/m", block=True))
     def put(self, request, postId, *args, **kwargs):
         try:
             poststat = PostsStat.objects.get(pk=postId)
