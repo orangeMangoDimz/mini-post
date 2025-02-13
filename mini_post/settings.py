@@ -62,6 +62,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_ratelimit.middleware.RatelimitMiddleware',
     'config.middleware.AuthRequiredMiddleware',
 ]
 
@@ -92,7 +93,7 @@ CACHES = {
         }
     }
 }
-RATELIMIT_USE_CACHE = 'default'
+# RATELIMIT_USE_CACHE = 'default'
 
 ASGI_APPLICATION = "mini_post.asgi.application"
 WSGI_APPLICATION = 'mini_post.wsgi.application'

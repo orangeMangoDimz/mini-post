@@ -39,7 +39,7 @@ class FormatResponse:
 class SignIn(APIView, FormatResponse):
     permission_classes = [AllowAny]
 
-    # TODO: add  ratelimit for this function
+    @method_decorator(ratelimit(key="ip", rate="5/5s", block=True))
     def post(self, request, format=None):
         data = request.data
         username = data.get("username", None)
@@ -70,7 +70,7 @@ class UpdatePostStats(UpdateAPIView, FormatResponse):
     # NOTE: Why do I need this serializer meanwhile I don't use the data in my Frontend?
     serializer_class = PostsStatsSerializers
 
-    @method_decorator(ratelimit(key="user_or_ip", rate="10/m", block=True))
+    @method_decorator(ratelimit(key="user", rate="5/5s", block=True))
     def put(self, request, postId, *args, **kwargs):
         try:
             poststat = PostsStat.objects.get(pk=postId)
@@ -94,25 +94,16 @@ class UpdatePostStats(UpdateAPIView, FormatResponse):
                             logger.info(info_message)
                             poststat.total_likes += 1
                     elif action == "unlike":
-                        # deleted, _ = Likes.objects.get(
-                        #     content_type=content_type,
-                        #     object_id=poststat.post.id,
-                        #     type="posts",
-                        #     user=request.user
-                        # ).delete()
-                        like = Likes.objects.filter(
+                        deleted, _ = Likes.objects.get(
                             content_type=content_type,
                             object_id=poststat.post.id,
                             type="posts",
                             user=request.user
-                        ).first()
-                        if like:
-                            like.delete()
+                        ).delete()
+                        if deleted:
                             info_message = f"{request.user.username} has unliked post #{poststat.post.id}"
                             logger.info(info_message)
                             poststat.total_likes -= 1
-                        else:
-                            return self.not_found_request("Like not found")
                     else:
                         warning_message = f"Action {action} not found"
                         logger.info(warning_message)
