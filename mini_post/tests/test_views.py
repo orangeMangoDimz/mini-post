@@ -1,11 +1,12 @@
-from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
+from django.core.cache import cache
+from django.test import override_settings
+from config.tests.test_base import BaseTestCase
 
-class TestView(TestCase):
+class TestView(BaseTestCase):
 
     def setUp(self):
-        self.client = Client()
         self.login_url = reverse('login')
         self.logout_url = reverse('logout')
         self.username = 'admin'
